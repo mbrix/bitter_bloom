@@ -1,0 +1,11 @@
+{application, bitter_bloom,
+ [
+  {description, "Low level Bitcoin compatible bloom filter library"},
+  {vsn, "1.2"},
+  {registered, []},
+  {applications, [
+                  kernel,
+                  stdlib]},
+  {mod, { lib_bitter, []}},
+  {env, []}
+ ]}.

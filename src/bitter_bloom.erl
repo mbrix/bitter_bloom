@@ -7,7 +7,8 @@
 		 is_bloom/1,
 		 clear/1,
 		 insert/2,
-		 contains/2]).
+		 contains/2,
+		 create/4]).
 
 -include("include/bitter_bloom.hrl").
 

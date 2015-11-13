@@ -10,7 +10,7 @@
 		 contains/2,
 		 create/4]).
 
--include("include/bitter_bloom.hrl").
+-include_lib("bitter_bloom.hrl").
 
 new(NumElements, FalsePositiveRate) ->
 	new(NumElements, FalsePositiveRate, 0, ?BLOOM_UPDATE_NONE).

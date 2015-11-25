@@ -11,21 +11,32 @@
 		 create/4]).
 
 -include_lib("bitter_bloom.hrl").
+-include_lib("eunit/include/eunit.hrl").
 
 new(NumElements, FalsePositiveRate) ->
 	new(NumElements, FalsePositiveRate, 0, ?BLOOM_UPDATE_NONE).
 new(NumElements, FalsePositiveRate, NTweak, NFlags) ->
-	Size = -1.0 / ?LN2SQUARED * NumElements * math:log(FalsePositiveRate),
+	NE = erlang:abs(NumElements),
+	FP = erlang:abs(FalsePositiveRate),
+	try
+	Size = -1.0 / ?LN2SQUARED * NE * math:log(FP),
 	FilterSize = lessthan_of(floor(Size / 8), ?MAX_BLOOM_FILTER_SIZE * 8),
 	VData = <<0:(FilterSize*8)>>,
-	NHashFuncs = greater_than(lessthan_of(floor(size(VData)*8 / NumElements * ?LN2),
+	NHashFuncs = greater_than(lessthan_of(floor(size(VData)*8 / NE * ?LN2),
 										  ?MAX_HASH_FUNCS), ?MIN_HASH_FUNCS),
-	create(VData, NHashFuncs, NTweak, NFlags).
+	create(vdata(VData), NHashFuncs, NTweak, NFlags)
+	catch _:_ ->
+			  create(<<0>>, 1, NTweak, NFlags)
+	end.
+
+vdata(<<>>) -> <<0>>;
+vdata(Other) -> Other.
 
 is_bloom(#bbloom{}) -> true;
 is_bloom(_) -> false.
 
 create(VData, _NHashFuncs, _NTweak, _NFlags) when size(VData) > ?MAX_BLOOM_FILTER_SIZE_BITS -> error;
+create(_Vdata, NHashFuncs, _NTweak, _NFlags) when NHashFuncs < 1 -> error;
 create(_VData, NHashFuncs, _NTweak, _NFlags) when NHashFuncs > ?MAX_HASH_FUNCS -> error;
 create(VData, NHashFuncs, NTweak, NFlags) ->
 	{ok, #bbloom{vData = VData,
@@ -34,6 +45,9 @@ create(VData, NHashFuncs, NTweak, NFlags) ->
 		    nFlags = NFlags}}.
 
 %% returns index
+
+%% A size of 0 will return NaN in javascript, lets return 0.
+hash(0, _, _, _) -> 0;
 hash(Size, NHashNum, NTweak, HashData) ->
 	erlang_murmurhash:murmurhash3_32(HashData,
 					((NHashNum * 16#FBA4C795) + NTweak) band 16#FFFFFFFF) rem Size.
@@ -68,6 +82,7 @@ clear(B) when is_record(B, bbloom) -> {ok, B#bbloom{vData = <<>>}}.
 %% Utility functions
 %%
 
+lessthan_of(0, _) -> 0;
 lessthan_of(X,Y) when Y < X -> Y;
 lessthan_of(X,_) -> X.
 

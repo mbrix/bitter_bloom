@@ -6,6 +6,6 @@
   {applications, [
                   kernel,
                   stdlib]},
-  {mod, { lib_bitter, []}},
+  {mod, { bitter_bloom, []}},
   {env, []}
  ]}.

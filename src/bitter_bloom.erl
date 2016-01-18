@@ -2,6 +2,12 @@
 -module(bitter_bloom).
 -author('mbranton@emberfinancial.com').
 
+-behaviour(application).
+-export([start/0, start/2, stop/0, stop/1]).
+
+-behaviour(supervisor).
+-export([init/1]).
+
 -export([new/2,
 		 new/4,
 		 is_bloom/1,
@@ -12,6 +18,16 @@
 
 -include_lib("bitter_bloom.hrl").
 -include_lib("eunit/include/eunit.hrl").
+
+
+%% Application behaviour
+start() -> application:ensure_all_started(bitter_bloom).
+start(_, _) -> supervisor:start_link({local,?MODULE},?MODULE,[]).
+stop() -> application:stop(bitter_bloom).
+stop(_) -> ok.
+
+init([]) -> {ok, {{one_for_one,3,10},[]}}.
+%% End application behaviour
 
 new(NumElements, FalsePositiveRate) ->
 	new(NumElements, FalsePositiveRate, 0, ?BLOOM_UPDATE_NONE).
